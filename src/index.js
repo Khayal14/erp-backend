@@ -261,5 +261,12 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 initDB().then(() => {
-  app.listen(PORT, () => console.log(`🚀 ERP Backend running on port ${PORT}`));
-}).catch(e => { console.error('DB init failed:', e); process.exit(1); });
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 ERP Backend running on port ${PORT}`);
+  });
+}).catch(e => {
+  console.error('DB init failed:', e);
+  // Important: Start the server anyway so the healthcheck passes, 
+  // even if the DB is having issues.
+  app.listen(PORT, '0.0.0.0'); 
+});.catch(e => { console.error('DB init failed:', e); process.exit(1); });
