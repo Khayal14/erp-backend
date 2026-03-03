@@ -16,19 +16,25 @@ const pool = new Pool({
 });
 
 // ── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
-app.use(express.json());
+// ── Middleware ────────────────────────────────────────────────────────────────
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps) or any Vercel domain
+    if (!origin || origin.includes('vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-function auth(req, res, next) {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-}
+// Add this extra handler just for the OPTIONS "Preflight"
+app.options('*', cors()); 
+
+app.use(express.json());
 
 // ── DB Init ───────────────────────────────────────────────────────────────────
 async function initDB() {
